@@ -1,0 +1,13 @@
+<assembly>
+    <id>assembly</id>
+    <baseDirectory>${project.artifactId}.war</baseDirectory>
+    <formats>
+        <format>tgz</format>
+    </formats>
+    <fileSets>
+        <fileSet>
+            <directory>caterpillar-gene/target/${project.artifactId}.war</directory>
+            <outputDirectory>/</outputDirectory>
+        </fileSet>
+    </fileSets>
+</assembly>
