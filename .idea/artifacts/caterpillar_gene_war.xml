@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="war" name="caterpillar-gene:war">
-    <output-path>$PROJECT_DIR$/caterpillar-gene/target</output-path>
-    <root id="archive" name="caterpillar-gene-1.0.0.war">
-      <element id="artifact" artifact-name="caterpillar-gene:war exploded" />
-    </root>
-  </artifact>
-</component>
