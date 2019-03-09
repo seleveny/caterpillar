@@ -6,7 +6,7 @@
     </formats>
     <fileSets>
         <fileSet>
-            <directory>caterpillar-gene/target/${project.artifactId}.war</directory>
+            <directory>eruca-gene/target/${project.artifactId}.war</directory>
             <outputDirectory>/</outputDirectory>
         </fileSet>
     </fileSets>

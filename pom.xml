@@ -5,12 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.amc</groupId>
-    <artifactId>caterpillar</artifactId>
+    <artifactId>eruca</artifactId>
     <packaging>pom</packaging>
     <version>1.0.0</version>
 
     <modules>
-        <module>caterpillar-gene</module>
+        <module>eruca-gene</module>
     </modules>
 
     <properties>
