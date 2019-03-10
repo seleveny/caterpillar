@@ -5,12 +5,18 @@ import sun.misc.BASE64Encoder;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Component
 public class GenerateGene {
@@ -18,6 +24,20 @@ public class GenerateGene {
     private static String codeGroup = "0123456789";
     private static int DEFAULT_WIDTH = 300;
     private static int DEFAULT_HEIGHT = 100;
+
+    private static ExecutorService executorService = null;
+    private static HashMap<String, Callable<Shape>> group = new HashMap<String,Callable<Shape>>();
+
+    static {
+        for(int i=0; i<imageCodeGroup.length(); i++){
+            String c = String.valueOf(imageCodeGroup.charAt(i));
+            group.put(c,new Task(c));
+        }
+    }
+    static {
+        executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+    }
+
     public static String createImage(String code, Integer level){
         try {
             return outputImage(DEFAULT_WIDTH,DEFAULT_HEIGHT,code,level);
@@ -69,6 +89,7 @@ public class GenerateGene {
      */
     private static String outputImage(int w, int h, String code, int level) throws IOException{
         int verifySize = code.length();
+
         BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
         Random rand = new Random();
         Graphics2D g2 = image.createGraphics();
@@ -93,7 +114,19 @@ public class GenerateGene {
             AffineTransform affine = new AffineTransform();
             affine.setToRotation(Math.PI / 4 * rand.nextDouble() * (rand.nextBoolean() ? 1 : -1), (w / verifySize) * i + fontSize/2, h/2);
             g2.setTransform(affine);
-            g2.drawChars(chars, i, 1, ((w-10) / verifySize) * i + 5, h/2 + fontSize/2 - 10);
+            GlyphVector v = font.createGlyphVector(g2.getFontMetrics(font).getFontRenderContext(), String.valueOf(chars[i]));
+            Shape shape = v.getOutline();
+            Rectangle bounds = shape.getBounds();
+            g2.translate(
+                    Math.abs((w/4 - bounds.width) - bounds.x + (i*w)/4 - rand.nextInt(w/4-bounds.width)),
+                    (h - bounds.height) / 2 - bounds.y
+            );
+            System.out.println(w + " " + bounds.width + " " + bounds.x + " " + ((w - bounds.width) / 2 - bounds.x));
+            g2.setColor(Color.WHITE);
+            g2.fill(shape);
+            g2.setColor(Color.BLACK);
+            g2.setStroke(new BasicStroke(3f));
+            g2.draw(shape);
         }
         g2.dispose();
         /**
@@ -104,4 +137,47 @@ public class GenerateGene {
         BASE64Encoder encoder = new BASE64Encoder();
         return encoder.encode(outputStream.toByteArray());
     }
+
+    //线程随时刷新
+    static class Task implements Runnable{
+        Shape shape = null;
+        String x;
+        int w;
+        int h;
+        Task(String x, int w, int h){
+            this.x = x;
+            this.w = w;
+            this.h = h;
+        }
+
+        @Override
+        public void run() {
+            BufferedImage image = new BufferedImage( w, h, BufferedImage.TYPE_INT_RGB);
+            Graphics2D g2 = image.createGraphics();
+            while(true){
+                AffineTransform affine = new AffineTransform();
+                affine.setToRotation(Math.PI / 4 * random.nextDouble() * (random.nextBoolean() ? 1 : -1), 0, h/2);
+                g2.setTransform(affine);
+                Font font = new Font("Algerian", Font.PLAIN, h);
+                GlyphVector v = font.createGlyphVector(g2.getFontMetrics(font).getFontRenderContext(), x);
+                Shape shape = v.getOutline();
+                Rectangle bounds = shape.getBounds();
+                g2.translate(
+                        Math.abs((w/4 - bounds.width) - bounds.x  - random.nextInt(w/4-bounds.width)),
+                        (h - bounds.height) / 2 - bounds.y
+                );
+                g2.setColor(Color.WHITE);
+                g2.fill(shape);
+                g2.setColor(Color.BLACK);
+                g2.setStroke(new BasicStroke(3f));
+                this.shape = g2.getClip();
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
 }
