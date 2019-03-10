@@ -13,6 +13,6 @@ public class showController {
     @RequestMapping("/show")
     private String show(HttpServletRequest httpServletRequest){
         String code = httpServletRequest.getParameter("code");
-        return "<img src='data:image/gif;base64,'" + GenerateGene.createImage(code) +"'></img>";
+        return "<img src='data:omage/jpg;base64,"+GenerateGene.createImage(code,0)+"'></img>";
     }
 }
