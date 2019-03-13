@@ -17,6 +17,7 @@
         <java.source.version>1.8</java.source.version>
         <java.target.version>1.8</java.target.version>
         <spring.boot.version>1.5.2.RELEASE</spring.boot.version>
+        <gifencoder.version>0.9</gifencoder.version>
     </properties>
 
     <dependencyManagement>
