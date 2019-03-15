@@ -3,6 +3,7 @@ package com.amc.utils;
 import com.sun.imageio.plugins.gif.GIFImageWriter;
 import com.sun.imageio.plugins.gif.GIFImageWriterSpi;
 import com.sun.imageio.plugins.gif.GIFStreamMetadata;
+import org.assertj.core.util.Strings;
 import org.springframework.stereotype.Component;
 import sun.misc.BASE64Encoder;
 
@@ -30,28 +31,19 @@ public class GenerateGene {
 
     private static int DEFAULT_WIDTH = 300;
     private static int DEFAULT_HEIGHT = 100;
-    private static int DEFAULT_REPIT = 10;  //十张
 
     private static ExecutorService executorService = null;
-    private static HashMap<String, Runnable> fontGroup = new HashMap<>();
-    private static HashMap<String, Runnable> geneGroup = new HashMap<>();
 
-    static {
-
-    }
-
-    static {
-        for(int i=0; i<imageCodeGroup.length(); i++){
-            String c = String.valueOf(imageCodeGroup.charAt(i));
-        }
-    }
     static {
         executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
     }
 
-    public static String createImage(String code, Integer level){
+    public static String createImage(String code){
         try {
-            return outputImage(DEFAULT_WIDTH,DEFAULT_HEIGHT,code,level);
+            if(Strings.isNullOrEmpty(code)){
+                code = getImageCode(random.nextInt(2)+4);
+            }
+            return outputImage(DEFAULT_WIDTH,DEFAULT_HEIGHT,code);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -60,16 +52,9 @@ public class GenerateGene {
     public static String getImageCode(int size){
         return  generateVerifyCode(size,imageCodeGroup);
     }
-    //使用到Algerian字体，系统里没有的话需要安装字体，字体只显示大写，去掉了1,0,i,o几个容易混淆的字符
+
     private static Random random = new Random();
-    /**
-     * 使用系统默认字符源生成验证码
-     * @param verifySize    验证码长度
-     * @return
-     */
-    public static String generateVerifyCode(int verifySize){
-        return generateVerifyCode(verifySize, imageCodeGroup);
-    }
+
     /**
      * 使用指定源生成验证码
      * @param verifySize    验证码长度
@@ -95,13 +80,12 @@ public class GenerateGene {
      * @param code
      * @throws IOException
      */
-    private static String outputImage(int w, int h, String code, int level) throws IOException{
+    private static String outputImage(int w, int h, String code) throws IOException{
         int verifySize = code.length();
 
 
         char[] chars = code.toCharArray();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        //FileCacheImageOutputStream imageOutputStream = new FileCacheImageOutputStream(outputStream,null);
         ImageOutputStream imageOutputStream = new FileImageOutputStream(new File("/Users/iamcap/Desktop/x.gif"));
         GifSequenceWriter gifSequenceWriter = new GifSequenceWriter(imageOutputStream, BufferedImage.TYPE_INT_RGB,20,true);
         for(int j=0; j<100; j++){
@@ -139,79 +123,9 @@ public class GenerateGene {
 
         gifSequenceWriter.close();
         outputStream.close();
-//        g2.dispose();
-        /**
-         * 转BASE64
-         */
-        
-//        ImageIO.write(image, "gif", outputStream);
         System.out.printf("size:"+ outputStream.size());
         BASE64Encoder encoder = new BASE64Encoder();
         return encoder.encode(outputStream.toByteArray());
-    }
-
-    //线程随时刷新
-    static class FontTask implements Runnable{
-        volatile Shape shape = null;
-        String x;
-        FontTask(String x){
-            this.x = x;
-        }
-
-        @Override
-        public void run() {
-            int w = DEFAULT_WIDTH/4;
-            int h = DEFAULT_HEIGHT/4;
-            BufferedImage image = new BufferedImage( w, h, BufferedImage.TYPE_INT_RGB);
-            Graphics2D g2 = image.createGraphics();
-            while(true){
-                AffineTransform affine = new AffineTransform();
-                affine.setToRotation(Math.PI / 4 * random.nextDouble() * (random.nextBoolean() ? 1 : -1), 0, h/2);
-                g2.setTransform(affine);
-                Font font = new Font("Algerian", Font.PLAIN, h);
-                GlyphVector v = font.createGlyphVector(g2.getFontMetrics(font).getFontRenderContext(), x);
-                Shape shape = v.getOutline();
-                Rectangle bounds = shape.getBounds();
-                g2.translate(
-                        Math.abs((w/4 - bounds.width) - bounds.x  - random.nextInt(w/4-bounds.width)),
-                        (h - bounds.height) / 2 - bounds.y
-                );
-                g2.setColor(Color.WHITE);
-                g2.fill(shape);
-                g2.setColor(Color.BLACK);
-
-                g2.setStroke(new BasicStroke(3f));
-                this.shape = g2.getClip();
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        public Shape getShape(){
-            return shape;
-        }
-    }
-
-    static class AdditionTask implements Runnable{
-        volatile Shape shape = null;
-        volatile Graphics2D graphics2D = null;
-        String code;
-        AdditionTask(Graphics2D graphics2D , String code){
-            this.graphics2D = graphics2D;
-            this.code = code;
-        }
-
-        @Override
-        public void run() {
-            BufferedImage image = new BufferedImage(DEFAULT_WIDTH,DEFAULT_HEIGHT,BufferedImage.TYPE_INT_RGB);
-            Graphics2D g2 = image.createGraphics();
-            while(true){
-                AffineTransform affineTransform = new AffineTransform();
-            }
-        }
     }
 
 }
