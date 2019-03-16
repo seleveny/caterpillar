@@ -15,13 +15,16 @@ import javax.imageio.stream.MemoryCacheImageOutputStream;
 import java.awt.*;
 import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.sql.SQLOutput;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -33,10 +36,19 @@ public class GenerateGene {
     private static int DEFAULT_HEIGHT = 100;
 
     private static ExecutorService executorService = null;
+    private static HashMap<String, DisturbCode> FullBuffer =  new HashMap<>();
 
     static {
         executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+        for(int i = 0 ; i< imageCodeGroup.length(); i++){
+            DisturbCode temp = new DisturbCode(DEFAULT_WIDTH,DEFAULT_HEIGHT,String.valueOf(imageCodeGroup.charAt(i)));
+            temp.start();
+            //executorService.submit(temp);
+            FullBuffer.put(String.valueOf(imageCodeGroup.charAt(i)),temp);
+        }
     }
+
+
 
     public static String createImage(String code){
         try {
@@ -86,46 +98,105 @@ public class GenerateGene {
 
         char[] chars = code.toCharArray();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ImageOutputStream imageOutputStream = new FileImageOutputStream(new File("/Users/iamcap/Desktop/x.gif"));
+        ImageOutputStream imageOutputStream = new FileCacheImageOutputStream(outputStream,null);
         GifSequenceWriter gifSequenceWriter = new GifSequenceWriter(imageOutputStream, BufferedImage.TYPE_INT_RGB,20,true);
-        for(int j=0; j<100; j++){
-            BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-            Random rand = new Random();
-            Graphics2D g2 = image.createGraphics();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(Color.WHITE);// 设置背景色
-            g2.fillRect(0, 0, w, h);
-            g2.setColor(Color.BLACK);
-            int fontSize = h-4;
-            Font font = new Font("Algerian", Font.PLAIN, fontSize);
-            g2.setFont(font);
-
-            for(int i = 0; i < verifySize; i++){
-                AffineTransform affine = new AffineTransform();
-                affine.setToRotation(Math.PI / 4 * rand.nextDouble() * (rand.nextBoolean() ? 1 : -1), (w / verifySize) * i + fontSize/2, h/2);
-                g2.setTransform(affine);
-                GlyphVector v = font.createGlyphVector(g2.getFontMetrics(font).getFontRenderContext(), String.valueOf(chars[i]));
-                Shape shape = v.getOutline();
-                Rectangle bounds = shape.getBounds();
-                g2.translate(
-                        Math.abs((w/4 - bounds.width) - bounds.x + (i*w)/4 - rand.nextInt(w/4-bounds.width)),
-                        (h - bounds.height) / 2 - bounds.y
-                );
-                System.out.println(w + " " + bounds.width + " " + bounds.x + " " + ((w - bounds.width) / 2 - bounds.x));
-                g2.setColor(Color.WHITE);
-                g2.fill(shape);
-                g2.setColor(Color.BLACK);
-                g2.setStroke(new BasicStroke(3f));
-                g2.draw(shape);
-            }
-            gifSequenceWriter.writeToSequence(image);
-        }
-
+        BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2 = image.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setColor(Color.WHITE);
+        g2.fillRect(0,0,w,h);
+        g2.setColor(Color.BLACK);
+        Shape num = FullBuffer.get("1").getShape();
+        Rectangle bounds = num.getBounds();
+        g2.translate(
+                Math.abs((w/4 - bounds.width) - bounds.x  - new Random().nextInt(w/4-bounds.width)),
+                (h - bounds.height) / 2 - bounds.y
+        );
+        g2.fill(num);
+        g2.draw(num);
+        gifSequenceWriter.writeToSequence(image);
+        gifSequenceWriter.writeToSequence(image);
+        gifSequenceWriter.writeToSequence(image);
+//        for(int j=0; j<100; j++){
+//            BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+//            Random rand = new Random();
+//            Graphics2D g2 = image.createGraphics();
+//            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+//            g2.setColor(Color.WHITE);// 设置背景色
+//            g2.fillRect(0, 0, w, h);
+//            g2.setColor(Color.BLACK);
+//            int fontSize = h-4;
+//            Font font = new Font("Algerian", Font.PLAIN, fontSize);
+//            g2.setFont(font);
+//
+//            for(int i = 0; i < verifySize; i++){
+//                AffineTransform affine = new AffineTransform();
+//                affine.setToRotation(Math.PI / 4 * rand.nextDouble() * (rand.nextBoolean() ? 1 : -1), (w / verifySize) * i + fontSize/2, h/2);
+//                g2.setTransform(affine);
+//                GlyphVector v = font.createGlyphVector(g2.getFontMetrics(font).getFontRenderContext(), String.valueOf(chars[i]));
+//                Shape shape = v.getOutline();
+//                Rectangle bounds = shape.getBounds();
+//                g2.translate(
+//                        Math.abs((w/4 - bounds.width) - bounds.x + (i*w)/4 - rand.nextInt(w/4-bounds.width)),
+//                        (h - bounds.height) / 2 - bounds.y
+//                );
+//                System.out.println(w + " " + bounds.width + " " + bounds.x + " " + ((w - bounds.width) / 2 - bounds.x));
+//                g2.setColor(Color.WHITE);
+//                g2.fill(shape);
+//                g2.setColor(Color.BLACK);
+//                g2.setStroke(new BasicStroke(3f));
+//                g2.draw(shape);
+//            }
+//            gifSequenceWriter.writeToSequence(image);
+//        }
+        imageOutputStream.flush();
         gifSequenceWriter.close();
         outputStream.close();
-        System.out.printf("size:"+ outputStream.size());
         BASE64Encoder encoder = new BASE64Encoder();
         return encoder.encode(outputStream.toByteArray());
     }
 
+    static class DisturbCode extends Thread {
+
+        private String dis;
+        private int width;
+        private int height;
+        Graphics2D g2;
+        Shape shape;
+
+        public DisturbCode(int width, int height, String dis){
+            this.dis = dis;
+            this.width = width;
+            this.height = height;
+        }
+
+        @Override
+        public void run() {
+            BufferedImage image = new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
+            g2 = image.createGraphics();
+            Font font = new Font("Algerian",Font.PLAIN,height-10);
+            while(true){
+                GlyphVector v = font.createGlyphVector(g2.getFontMetrics(font).getFontRenderContext(),dis);
+                Shape shape = v.getOutline();
+                this.shape = shape;
+                Rectangle bounds = shape.getBounds();
+                try {
+                    if("1".equals(dis)){
+                        System.out.println(dis +" " + bounds.x + " " + bounds.y + " " + bounds.width + " " + bounds.height);
+                    }
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        public Graphics2D get(){
+            return g2;
+        }
+
+        public Shape getShape(){
+            return shape;
+        }
+    }
 }
