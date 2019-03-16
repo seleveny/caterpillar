@@ -15,6 +15,8 @@ import javax.imageio.stream.MemoryCacheImageOutputStream;
 import java.awt.*;
 import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Arc2D;
+import java.awt.geom.Area;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -106,13 +108,16 @@ public class GenerateGene {
         g2.setColor(Color.WHITE);
         g2.fillRect(0,0,w,h);
         g2.setColor(Color.BLACK);
-        Shape num = FullBuffer.get("1").getShape();
+        Shape num = FullBuffer.get(code).getShape();
         Rectangle bounds = num.getBounds();
         g2.translate(
-                Math.abs((w/4 - bounds.width) - bounds.x  - new Random().nextInt(w/4-bounds.width)),
+                Math.abs((w/4 - bounds.width) - bounds.x),
                 (h - bounds.height) / 2 - bounds.y
         );
+        g2.setColor(Color.WHITE);
         g2.fill(num);
+        g2.setStroke(new BasicStroke(3f));
+        g2.setColor(Color.BLACK);
         g2.draw(num);
         gifSequenceWriter.writeToSequence(image);
         gifSequenceWriter.writeToSequence(image);
@@ -175,24 +180,23 @@ public class GenerateGene {
             BufferedImage image = new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
             g2 = image.createGraphics();
             Font font = new Font("Algerian",Font.PLAIN,height-10);
+            GlyphVector v = font.createGlyphVector(g2.getFontMetrics(font).getFontRenderContext(),dis);
+            Shape shape = v.getOutline();
             while(true){
-                GlyphVector v = font.createGlyphVector(g2.getFontMetrics(font).getFontRenderContext(),dis);
-                Shape shape = v.getOutline();
-                this.shape = shape;
-                Rectangle bounds = shape.getBounds();
                 try {
-                    if("1".equals(dis)){
-                        System.out.println(dis +" " + bounds.x + " " + bounds.y + " " + bounds.width + " " + bounds.height);
-                    }
-                    Thread.sleep(1000);
+                    //进行胡乱切割形成相似元素
+                    Arc2D slice = new Arc2D.Float();
+                    double start = random.nextDouble()*150 + 30;
+                    double end = random.nextDouble()*300 + 60;
+                    slice.setArc(v.getVisualBounds(),start,end,Arc2D.PIE);
+                    Area show = new Area(shape);
+                    show.subtract(new Area(slice));
+                    this.shape = show;
+                    Thread.sleep(100);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
-        }
-
-        public Graphics2D get(){
-            return g2;
         }
 
         public Shape getShape(){
