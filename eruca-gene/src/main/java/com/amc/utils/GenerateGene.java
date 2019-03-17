@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.sql.SQLOutput;
 import java.util.HashMap;
+import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -101,59 +102,35 @@ public class GenerateGene {
         char[] chars = code.toCharArray();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ImageOutputStream imageOutputStream = new FileCacheImageOutputStream(outputStream,null);
-        GifSequenceWriter gifSequenceWriter = new GifSequenceWriter(imageOutputStream, BufferedImage.TYPE_INT_RGB,20,true);
+        GifSequenceWriter gifSequenceWriter = new GifSequenceWriter(imageOutputStream, BufferedImage.TYPE_INT_RGB,100,true);
         BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
         Graphics2D g2 = image.createGraphics();
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setColor(Color.WHITE);
-        g2.fillRect(0,0,w,h);
-        g2.setColor(Color.BLACK);
-        Shape num = FullBuffer.get(code).getShape();
-        Rectangle bounds = num.getBounds();
-        g2.translate(
-                Math.abs((w/4 - bounds.width) - bounds.x),
-                (h - bounds.height) / 2 - bounds.y
-        );
-        g2.setColor(Color.WHITE);
-        g2.fill(num);
-        g2.setStroke(new BasicStroke(3f));
-        g2.setColor(Color.BLACK);
-        g2.draw(num);
-        gifSequenceWriter.writeToSequence(image);
-        gifSequenceWriter.writeToSequence(image);
-        gifSequenceWriter.writeToSequence(image);
-//        for(int j=0; j<100; j++){
-//            BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-//            Random rand = new Random();
-//            Graphics2D g2 = image.createGraphics();
-//            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-//            g2.setColor(Color.WHITE);// 设置背景色
-//            g2.fillRect(0, 0, w, h);
-//            g2.setColor(Color.BLACK);
-//            int fontSize = h-4;
-//            Font font = new Font("Algerian", Font.PLAIN, fontSize);
-//            g2.setFont(font);
-//
-//            for(int i = 0; i < verifySize; i++){
-//                AffineTransform affine = new AffineTransform();
-//                affine.setToRotation(Math.PI / 4 * rand.nextDouble() * (rand.nextBoolean() ? 1 : -1), (w / verifySize) * i + fontSize/2, h/2);
-//                g2.setTransform(affine);
-//                GlyphVector v = font.createGlyphVector(g2.getFontMetrics(font).getFontRenderContext(), String.valueOf(chars[i]));
-//                Shape shape = v.getOutline();
-//                Rectangle bounds = shape.getBounds();
-//                g2.translate(
-//                        Math.abs((w/4 - bounds.width) - bounds.x + (i*w)/4 - rand.nextInt(w/4-bounds.width)),
-//                        (h - bounds.height) / 2 - bounds.y
-//                );
-//                System.out.println(w + " " + bounds.width + " " + bounds.x + " " + ((w - bounds.width) / 2 - bounds.x));
-//                g2.setColor(Color.WHITE);
-//                g2.fill(shape);
-//                g2.setColor(Color.BLACK);
-//                g2.setStroke(new BasicStroke(3f));
-//                g2.draw(shape);
-//            }
-//            gifSequenceWriter.writeToSequence(image);
-//        }
+        Random rand = new Random();
+        for(int j=0; j<10; j++){
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(Color.WHITE);// 设置背景色
+            g2.fillRect(0, 0, w, h);
+            g2.setColor(Color.BLACK);
+            int fontSize = h-4;
+
+            for(int i = 0; i < verifySize; i++){
+                AffineTransform affine = new AffineTransform();
+                affine.setToRotation(Math.PI / 4 * rand.nextDouble() * (rand.nextBoolean() ? 1 : -1), (w / verifySize) * i + fontSize/2, h/2);
+                g2.setTransform(affine);
+                Shape num = FullBuffer.get(String.valueOf(code.charAt(i))).getShape();
+                Rectangle bounds = num.getBounds();
+                g2.translate(
+                        Math.abs((w/4 - bounds.width) - bounds.x + (i*w)/4 - rand.nextInt(w/4-bounds.width)),
+                        (h - bounds.height) / 2 - bounds.y
+                );
+                g2.setColor(Color.WHITE);
+                g2.fill(num);
+                g2.setStroke(new BasicStroke(3f));
+                g2.setColor(Color.BLACK);
+                g2.draw(num);
+            }
+            gifSequenceWriter.writeToSequence(image);
+        }
         imageOutputStream.flush();
         gifSequenceWriter.close();
         outputStream.close();
@@ -202,5 +179,12 @@ public class GenerateGene {
         public Shape getShape(){
             return shape;
         }
+    }
+
+    static class Change {
+        private int x;  //起始坐标
+        private int y;  //起始纵坐标
+        private Shape shape;
+
     }
 }
